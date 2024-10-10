@@ -1,10 +1,10 @@
-# 🤖 AI Chat Web App
+# 🤖 AWS Bedrock Web Chat
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Made with JavaScript](https://img.shields.io/badge/Made%20with-JavaScript-yellow.svg)](https://www.javascript.com/)
 [![Uses AWS Bedrock](https://img.shields.io/badge/Uses-AWS%20Bedrock-orange.svg)](https://aws.amazon.com/bedrock/)
 
-A sleek, modern web application for chatting with AI using AWS Bedrock's Claude 3 model.
+A sleek, modern web application for chatting with AI using AWS Bedrock's Claude 3.5 Sonnet model and local storage using IndexedDB.
 
 ## 🌟 Features
 
@@ -27,7 +27,7 @@ A sleek, modern web application for chatting with AI using AWS Bedrock's Claude 
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/ai-chat-web-app.git
+   git clone https://github.com/datatalkbv/chat.git
    ```
 
 2. Open `index.html` in your web browser.
@@ -52,11 +52,6 @@ This project is licensed under the GNU Affero General Public License v3.0 (AGPL-
 
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/yourusername/ai-chat-web-app/issues).
 
-## 📬 Contact
-
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter) - email@example.com
-
-Project Link: [https://github.com/yourusername/ai-chat-web-app](https://github.com/yourusername/ai-chat-web-app)
 
 ## 🙏 Acknowledgements
 
