@@ -1,0 +1,494 @@
+import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from 'https://cdn.skypack.dev/@aws-sdk/client-bedrock-runtime';
+import { SignatureV4 } from 'https://cdn.skypack.dev/@aws-sdk/signature-v4';
+import { Sha256 } from 'https://cdn.skypack.dev/@aws-crypto/sha256-browser';
+
+let db;
+let currentConversationId;
+
+function initDB() {
+    const request = indexedDB.open('ChatApp', 1);
+
+    request.onerror = (event) => {
+        console.error('IndexedDB error:', event.target.error);
+    };
+
+    request.onsuccess = (event) => {
+        db = event.target.result;
+        loadConversations();
+    };
+
+    request.onupgradeneeded = (event) => {
+        db = event.target.result;
+        const objectStore = db.createObjectStore('conversations', { keyPath: 'id', autoIncrement: true });
+        objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+    };
+}
+
+function saveCredentials() {
+    const accessKey = document.getElementById('accessKey').value;
+    const secretKey = document.getElementById('secretKey').value;
+    const region = document.getElementById('region').value;
+
+    if (!accessKey || !secretKey || !region) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    localStorage.setItem('awsCredentials', JSON.stringify({ accessKey, secretKey, region }));
+    closeSettingsModal();
+    alert('Credentials saved!');
+}
+
+function getCredentials() {
+    const credentials = localStorage.getItem('awsCredentials');
+    return credentials ? JSON.parse(credentials) : null;
+}
+
+function openSettingsModal() {
+    document.getElementById('settingsModal').classList.remove('hidden');
+    const credentials = getCredentials();
+    if (credentials) {
+        document.getElementById('accessKey').value = credentials.accessKey;
+        document.getElementById('secretKey').value = credentials.secretKey;
+        document.getElementById('region').value = credentials.region;
+    }
+}
+
+function closeSettingsModal() {
+    document.getElementById('settingsModal').classList.add('hidden');
+}
+
+function checkCredentials() {
+    const credentials = getCredentials();
+    if (!credentials) {
+        openSettingsModal();
+    }
+}
+
+async function sendMessage() {
+    const credentials = getCredentials();
+    if (!validateCredentials(credentials)) return;
+
+    const userInput = getUserInput();
+    if (!userInput) return;
+
+    updateUIWithUserMessage(userInput);
+    await updateConversationWithUserMessage(userInput);
+
+    const client = createBedrockClient(credentials);
+    const conversation = await getUpdatedConversation();
+    const params = createModelParams(conversation);
+
+    try {
+        const assistantResponse = await invokeModel(client, params);
+        await updateConversationWithAssistantResponse(assistantResponse);
+        logFinalConversationState();
+    } catch (error) {
+        handleModelError(error);
+    }
+}
+
+function validateCredentials(credentials) {
+    if (!credentials) {
+        alert('Please save your AWS credentials first.');
+        return false;
+    }
+    return true;
+}
+
+function getUserInput() {
+    const userInput = document.getElementById('userInput').value.trim();
+    return userInput ? userInput : null;
+}
+
+function updateUIWithUserMessage(userInput) {
+    updateChatHistory('user', userInput);
+    document.getElementById('userInput').value = '';
+}
+
+async function updateConversationWithUserMessage(userInput) {
+    await updateConversation(currentConversationId, { role: 'user', content: userInput });
+}
+
+function createBedrockClient(credentials) {
+    return new BedrockRuntimeClient({
+        region: credentials.region,
+        credentials: {
+            accessKeyId: credentials.accessKey,
+            secretAccessKey: credentials.secretKey
+        },
+        signer: new SignatureV4({
+            credentials: {
+                accessKeyId: credentials.accessKey,
+                secretAccessKey: credentials.secretKey
+            },
+            region: credentials.region,
+            service: 'bedrock',
+            sha256: Sha256
+        })
+    });
+}
+
+async function getUpdatedConversation() {
+    const updatedConversation = await getConversation(currentConversationId);
+    console.log("Updated conversation after user input:", updatedConversation);
+    return updatedConversation;
+}
+
+function createModelParams(conversation) {
+    const messages = conversation.messages.map(msg => ({ role: msg.role, content: msg.content }));
+    return {
+        modelId: 'anthropic.claude-3-sonnet-20240229-v1:0',
+        contentType: 'application/json',
+        accept: 'application/json',
+        body: JSON.stringify({
+            anthropic_version: "bedrock-2023-05-31",
+            max_tokens: 8192,
+            messages: messages,
+            temperature: 0.3,
+            top_p: 1,
+            system: ''
+        })
+    };
+}
+
+async function invokeModel(client, params) {
+    const command = new InvokeModelWithResponseStreamCommand(params);
+    const response = await client.send(command);
+    let assistantResponse = '';
+    let messageElement = null;
+
+    for await (const chunk of response.body) {
+        try {
+            const parsed = parseChunk(chunk);
+            if (parsed.type === 'content_block_delta') {
+                assistantResponse += parsed.delta.text;
+                const parsedContent = marked.parse(assistantResponse);
+                const highlightedContent = highlightCode(parsedContent);
+                messageElement = updateChatHistory('assistant', highlightedContent, true, messageElement);
+            }
+        } catch (e) {
+            console.error('Error parsing chunk:', e);
+        }
+    }
+
+    return assistantResponse;
+}
+
+function highlightCode(content) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    tempDiv.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+    return tempDiv.innerHTML;
+}
+
+function parseChunk(chunk) {
+    const uint8Array = chunk.chunk.bytes;
+    const decoder = new TextDecoder();
+    const jsonString = decoder.decode(uint8Array);
+    return JSON.parse(jsonString);
+}
+
+async function updateConversationWithAssistantResponse(assistantResponse) {
+    await updateConversation(currentConversationId, { role: 'assistant', content: assistantResponse });
+}
+
+async function logFinalConversationState() {
+    const finalConversation = await getConversation(currentConversationId);
+    console.log("Final conversation state:", finalConversation);
+}
+
+function handleModelError(error) {
+    console.error('Error:', error);
+    updateChatHistory('system', 'An error occurred. Please check the console for details.');
+}
+
+
+async function createNewConversation() {
+    const transaction = db.transaction(['conversations'], 'readwrite');
+    const objectStore = transaction.objectStore('conversations');
+    const newConversation = { timestamp: Date.now(), messages: [] };
+    const request = objectStore.add(newConversation);
+
+    request.onsuccess = (event) => {
+        currentConversationId = event.target.result;
+        document.getElementById('chatHistory').innerHTML = '';
+        // Focus on the text chat input
+        document.getElementById('userInput').focus();
+    };
+
+    request.onerror = (event) => {
+        console.error('Error creating new conversation:', event.target.error);
+    };
+}
+
+async function getConversation(id) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['conversations'], 'readonly');
+        const objectStore = transaction.objectStore('conversations');
+        const request = objectStore.get(id);
+
+        request.onsuccess = (event) => {
+            resolve(event.target.result);
+        };
+
+        request.onerror = (event) => {
+            reject(event.target.error);
+        };
+    });
+}
+
+async function updateConversation(id, message) {
+    return new Promise(async (resolve, reject) => {
+        const transaction = db.transaction(['conversations'], 'readwrite');
+        const objectStore = transaction.objectStore('conversations');
+
+        const getRequest = objectStore.get(id);
+
+        getRequest.onsuccess = (event) => {
+            const conversation = event.target.result;
+            conversation.messages.push(message);
+
+            const putRequest = objectStore.put(conversation);
+
+            putRequest.onsuccess = () => {
+                console.log('Conversation updated successfully');
+                resolve(conversation);
+            };
+
+            putRequest.onerror = (event) => {
+                console.error('Error updating conversation:', event.target.error);
+                reject(event.target.error);
+            };
+        };
+
+        getRequest.onerror = (event) => {
+            console.error('Error retrieving conversation:', event.target.error);
+            reject(event.target.error);
+        };
+
+        transaction.oncomplete = () => {
+            console.log('Transaction completed: database modification finished.');
+        };
+    });
+}
+
+function loadConversations() {
+    const transaction = db.transaction(['conversations'], 'readonly');
+    const objectStore = transaction.objectStore('conversations');
+    const index = objectStore.index('timestamp');
+    const request = index.openCursor(null, 'prev');
+
+    const conversationList = document.getElementById('conversationList');
+    conversationList.innerHTML = '';
+
+    request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+            const conversation = cursor.value;
+            const firstUserMessage = conversation.messages.find(msg => msg.role === 'user');
+            const preview = firstUserMessage ? firstUserMessage.content.substring(0, 100) + '...' : 'Empty conversation';
+
+            const li = document.createElement('li');
+            li.className = 'conversation-item p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded text-gray-800 dark:text-gray-200 flex justify-between items-center';
+            li.innerHTML = `
+                <span>${preview}</span>
+                <i class="delete-icon bi bi-trash text-red-500 hover:text-red-700 cursor-pointer"></i>
+            `;
+            li.querySelector('span').onclick = () => displayConversation(conversation);
+            li.querySelector('.delete-icon').onclick = (e) => {
+                e.stopPropagation();
+                deleteConversation(conversation.id);
+            };
+            conversationList.appendChild(li);
+
+            if (!currentConversationId) {
+                currentConversationId = conversation.id;
+                displayConversation(conversation);
+            }
+
+            cursor.continue();
+        } else if (!currentConversationId) {
+            createNewConversation();
+        }
+    };
+
+    request.onerror = (event) => {
+        console.error('Error loading conversations:', event.target.error);
+        createNewConversation();
+    };
+}
+
+function deleteConversation(id) {
+    const transaction = db.transaction(['conversations'], 'readwrite');
+    const objectStore = transaction.objectStore('conversations');
+    const request = objectStore.delete(id);
+
+    request.onsuccess = () => {
+        console.log('Conversation deleted successfully');
+        if (currentConversationId === id) {
+            currentConversationId = null;
+            document.getElementById('chatHistory').innerHTML = '';
+        }
+        loadConversations();
+    };
+
+    request.onerror = (event) => {
+        console.error('Error deleting conversation:', event.target.error);
+    };
+}
+
+function displayConversation(conversation) {
+    currentConversationId = conversation.id;
+    const chatHistory = document.getElementById('chatHistory');
+    chatHistory.innerHTML = '';
+    conversation.messages.forEach(message => {
+        const parsedContent = marked.parse(message.content);
+        const highlightedContent = highlightCode(parsedContent);
+        updateChatHistory(message.role, highlightedContent);
+    });
+}
+
+// Add event listeners after the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    initDB();
+    checkCredentials();
+    document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);
+    document.getElementById('saveCredentialsBtn').addEventListener('click', saveCredentials);
+    document.getElementById('newConversationBtn').addEventListener('click', createNewConversation);
+
+    // Focus the text input when the page loads
+    document.getElementById('userInput').focus();
+
+    // Close modal when clicking outside
+    document.getElementById('settingsModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('settingsModal')) {
+            closeSettingsModal();
+        }
+    });
+
+    // Handle Enter key to send message and Shift+Enter for new line
+    const userInput = document.getElementById('userInput');
+    
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            if (!e.shiftKey) {
+                e.preventDefault();
+                if (userInput.value.trim()) {
+                    sendMessage();
+                }
+            }
+        }
+    });
+});
+
+// Update the updateChatHistory function to create message bubbles and handle streaming with markdown
+function updateChatHistory(role, content, isStreaming = false, existingElement = null) {
+    const chatHistory = document.getElementById('chatHistory');
+    let messageElement = existingElement;
+
+    if (!messageElement) {
+        messageElement = document.createElement('div');
+        messageElement.className = 'mb-4 w-full';
+        messageElement.dataset.role = role;
+        const bubble = document.createElement('div');
+        bubble.className = `p-3 rounded-lg ${
+            role === 'user' 
+                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
+                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+        } markdown-content`;
+        messageElement.appendChild(bubble);
+        chatHistory.appendChild(messageElement);
+    }
+
+    const bubble = messageElement.firstChild;
+    bubble.innerHTML = content;
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+
+    return messageElement;
+}
+
+// Speech recognition setup
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+recognition.continuous = true;
+recognition.interimResults = true;
+
+const microphoneBtn = document.getElementById('microphoneBtn');
+const userInput = document.getElementById('userInput');
+
+let isListening = false;
+
+microphoneBtn.addEventListener('click', () => {
+    if (!isListening) {
+        recognition.start();
+        microphoneBtn.classList.add('bg-red-500');
+        microphoneBtn.classList.remove('bg-gray-300');
+        isListening = true;
+    } else {
+        recognition.stop();
+        microphoneBtn.classList.remove('bg-red-500');
+        microphoneBtn.classList.add('bg-gray-300');
+        isListening = false;
+    }
+});
+
+recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+        }
+    }
+    
+    // Append new transcription to existing text
+    userInput.value += ' ' + transcript;
+    
+    // Trim leading/trailing spaces and remove double spaces
+    userInput.value = userInput.value.trim().replace(/\s+/g, ' ');
+    
+    // Show send button if there's text
+    if (userInput.value.trim()) {
+        sendMessageBtn.classList.remove('hidden');
+    } else {
+        sendMessageBtn.classList.add('hidden');
+    }
+};
+
+recognition.onerror = (event) => {
+    console.error('Speech recognition error', event.error);
+    microphoneBtn.classList.remove('bg-red-500');
+    microphoneBtn.classList.add('bg-gray-300');
+    isListening = false;
+};
+
+recognition.onend = () => {
+    microphoneBtn.classList.remove('bg-red-500');
+    microphoneBtn.classList.add('bg-gray-300');
+    isListening = false;
+};
+
+
+// Function to set the color scheme
+function setColorScheme(scheme) {
+    if (scheme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
+
+// Check for saved color scheme preference or use the system preference
+const savedScheme = localStorage.getItem('color-scheme');
+if (savedScheme) {
+    setColorScheme(savedScheme);
+} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    setColorScheme('dark');
+}
+
+// Watch for system preference changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    setColorScheme(e.matches ? 'dark' : 'light');
+});
