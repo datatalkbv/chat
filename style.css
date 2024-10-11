@@ -103,4 +103,14 @@
 
 body {
     font-size: 80%;
+}#microphoneBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0;
+}
+
+#microphoneBtn.active {
+    color: #ef4444; /* red-500 in Tailwind */
 }

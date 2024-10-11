@@ -448,13 +448,11 @@ let isListening = false;
 microphoneBtn.addEventListener('click', () => {
     if (!isListening) {
         recognition.start();
-        microphoneBtn.classList.add('bg-red-500');
-        microphoneBtn.classList.remove('bg-gray-300');
+        microphoneBtn.classList.add('active');
         isListening = true;
     } else {
         recognition.stop();
-        microphoneBtn.classList.remove('bg-red-500');
-        microphoneBtn.classList.add('bg-gray-300');
+        microphoneBtn.classList.remove('active');
         isListening = false;
     }
 });
@@ -500,8 +498,7 @@ recognition.onerror = (event) => {
 };
 
 recognition.onend = () => {
-    microphoneBtn.classList.remove('bg-red-500');
-    microphoneBtn.classList.add('bg-gray-300');
+    microphoneBtn.classList.remove('active');
     isListening = false;
 };
 
