@@ -89,9 +89,6 @@
 
 /* Mobile-friendly styles */
 @media (max-width: 768px) {
-    body {
-        padding-top: 60px; /* Make room for the mobile header */
-    }
 
     #sidebar {
         width: 80%;
@@ -119,13 +116,5 @@
     #userInput {
         max-height: 100px; /* Limit the height of the textarea */
         overflow-y: auto; /* Add scrollbar if content exceeds max-height */
-    }
-}
-
-/* Ensure the chat history doesn't overlap with the fixed header on mobile */
-@media (max-width: 768px) {
-    #chat {
-        height: calc(100vh - 60px); /* Subtract the height of the mobile header */
-        margin-top: 60px; /* Add margin to push the chat below the header */
     }
 }
