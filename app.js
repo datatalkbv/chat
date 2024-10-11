@@ -459,20 +459,31 @@ microphoneBtn.addEventListener('click', () => {
     }
 });
 
+let lastTranscript = '';
+
 recognition.onresult = (event) => {
-    let transcript = '';
+    let interimTranscript = '';
+    let finalTranscript = '';
+
     for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-            transcript += event.results[i][0].transcript;
+            finalTranscript += transcript;
+        } else {
+            interimTranscript += transcript;
         }
     }
-    
-    // Append new transcription to existing text
-    userInput.value += ' ' + transcript;
-    
+
+    // Only update the input if the transcript has changed
+    if (finalTranscript !== lastTranscript) {
+        // Replace the entire input value with the new transcript
+        userInput.value = finalTranscript;
+        lastTranscript = finalTranscript;
+    }
+
     // Trim leading/trailing spaces and remove double spaces
     userInput.value = userInput.value.trim().replace(/\s+/g, ' ');
-    
+
     // Show send button if there's text
     if (userInput.value.trim()) {
         sendMessageBtn.classList.remove('hidden');
