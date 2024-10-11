@@ -388,13 +388,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
 
     toggleSidebarBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
+        sidebar.classList.toggle('translate-x-0');
     });
 
     // Close sidebar when clicking outside on mobile
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !toggleSidebarBtn.contains(e.target)) {
-            sidebar.classList.remove('active');
+            sidebar.classList.remove('translate-x-0');
+        }
+    });
+
+    // Adjust layout when virtual keyboard appears
+    window.addEventListener('resize', () => {
+        if (window.innerHeight < 600) { // Assuming the keyboard is open
+            document.body.classList.add('keyboard-open');
+        } else {
+            document.body.classList.remove('keyboard-open');
         }
     });
 });

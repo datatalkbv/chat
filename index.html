@@ -10,8 +10,15 @@
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 h-screen flex flex-col md:flex-row overflow-hidden">
+    <div id="mobileHeader" class="md:hidden flex justify-between items-center p-4 bg-white dark:bg-gray-800 shadow-md">
+        <button id="toggleSidebarBtn" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition duration-300">
+            <i class="bi bi-list text-2xl"></i>
+        </button>
+        <h1 class="text-xl font-bold text-gray-800 dark:text-white">Chat App</h1>
+        <div class="w-8"></div> <!-- Placeholder for balance -->
+    </div>
 
-    <div id="sidebar" class="w-full md:w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col">
+    <div id="sidebar" class="w-full md:w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full md:relative md:translate-x-0 transition duration-300 ease-in-out">
         <div class="p-4 flex-grow flex flex-col">
             <button id="newConversationBtn"
                 class="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition duration-300 mb-4 text-left flex items-center">
