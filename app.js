@@ -382,6 +382,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // Mobile sidebar toggle
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    const sidebar = document.getElementById('sidebar');
+
+    toggleSidebarBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !toggleSidebarBtn.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
 });
 
 // Update the updateChatHistory function to create message bubbles and handle streaming with markdown

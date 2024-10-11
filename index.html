@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="bg-gray-100 dark:bg-gray-900 h-screen flex overflow-hidden">
+<body class="bg-gray-100 dark:bg-gray-900 h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <div id="sidebar" class="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col">
+    <div id="sidebar" class="w-full md:w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col">
         <div class="p-4 flex-grow flex flex-col">
             <button id="newConversationBtn"
                 class="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition duration-300 mb-4 text-left flex items-center">
@@ -21,10 +21,13 @@
             <ul id="conversationList" class="space-y-2 overflow-y-auto flex-grow">
             </ul>
         </div>
-        <div class="p-4 ">
+        <div class="p-4 flex justify-between items-center">
             <button id="openSettingsBtn"
-                class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition duration-300 w-full text-left">
-                <i class="bi bi-gear-fill mr-2"></i>
+                class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition duration-300">
+                <i class="bi bi-gear-fill"></i>
+            </button>
+            <button id="toggleSidebarBtn" class="md:hidden text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition duration-300">
+                <i class="bi bi-list"></i>
             </button>
         </div>
     </div>
