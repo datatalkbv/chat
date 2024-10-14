@@ -428,7 +428,7 @@ async function deleteMessageAndSubsequent(messageElement) {
     // Update the conversation in the database
     const conversation = await getConversation(currentConversationId);
     const messageIndex = Array.from(chatHistory.children).indexOf(messageElement);
-    conversation.messages = conversation.messages.slice(0, messageIndex);
+    conversation.messages = conversation.messages.slice(0, messageIndex-3);
 
     await updateConversation(currentConversationId, null, conversation.messages);
 }
