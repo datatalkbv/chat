@@ -240,40 +240,6 @@ async function getConversation(id) {
     });
 }
 
-async function updateConversation(id, message) {
-    return new Promise(async (resolve, reject) => {
-        const transaction = db.transaction(['conversations'], 'readwrite');
-        const objectStore = transaction.objectStore('conversations');
-
-        const getRequest = objectStore.get(id);
-
-        getRequest.onsuccess = (event) => {
-            const conversation = event.target.result;
-            conversation.messages.push(message);
-
-            const putRequest = objectStore.put(conversation);
-
-            putRequest.onsuccess = () => {
-                console.log('Conversation updated successfully');
-                resolve(conversation);
-            };
-
-            putRequest.onerror = (event) => {
-                console.error('Error updating conversation:', event.target.error);
-                reject(event.target.error);
-            };
-        };
-
-        getRequest.onerror = (event) => {
-            console.error('Error retrieving conversation:', event.target.error);
-            reject(event.target.error);
-        };
-
-        transaction.oncomplete = () => {
-            console.log('Transaction completed: database modification finished.');
-        };
-    });
-}
 
 function loadConversations() {
     const transaction = db.transaction(['conversations'], 'readonly');
