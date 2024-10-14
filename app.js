@@ -415,7 +415,7 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
 
     if (!messageElement) {
         messageElement = document.createElement('div');
-        messageElement.className = 'mb-4 w-full';
+        messageElement.className = 'mb-4 w-full relative';
         messageElement.dataset.role = role;
         const bubble = document.createElement('div');
         bubble.className = `p-3 rounded-lg ${
@@ -424,14 +424,87 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
                 : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
         } markdown-content`;
         messageElement.appendChild(bubble);
+
+        if (role === 'user') {
+            const trashIcon = document.createElement('button');
+            trashIcon.className = 'absolute top-2 right-2 text-gray-500 hover:text-red-500 transition-colors duration-200';
+            trashIcon.innerHTML = '<i class="bi bi-trash"></i>';
+            trashIcon.onclick = () => deleteMessageAndSubsequent(messageElement);
+            messageElement.appendChild(trashIcon);
+        }
+
         chatHistory.appendChild(messageElement);
     }
 
-    const bubble = messageElement.firstChild;
+    const bubble = messageElement.querySelector('.markdown-content');
     bubble.innerHTML = content;
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
     return messageElement;
+}
+
+async function deleteMessageAndSubsequent(messageElement) {
+    if (!confirm('Are you sure you want to delete this message and all subsequent messages?')) {
+        return;
+    }
+
+    const chatHistory = document.getElementById('chatHistory');
+    let currentElement = messageElement;
+    let messagesToDelete = [];
+
+    while (currentElement) {
+        messagesToDelete.push(currentElement);
+        currentElement = currentElement.nextElementSibling;
+    }
+
+    messagesToDelete.forEach(el => chatHistory.removeChild(el));
+
+    // Update the conversation in the database
+    const conversation = await getConversation(currentConversationId);
+    const messageIndex = Array.from(chatHistory.children).indexOf(messageElement);
+    conversation.messages = conversation.messages.slice(0, messageIndex);
+
+    await updateConversation(currentConversationId, null, conversation.messages);
+}
+
+// Update the updateConversation function to accept a messages array
+async function updateConversation(id, message = null, messages = null) {
+    return new Promise(async (resolve, reject) => {
+        const transaction = db.transaction(['conversations'], 'readwrite');
+        const objectStore = transaction.objectStore('conversations');
+
+        const getRequest = objectStore.get(id);
+
+        getRequest.onsuccess = (event) => {
+            const conversation = event.target.result;
+            if (message) {
+                conversation.messages.push(message);
+            } else if (messages) {
+                conversation.messages = messages;
+            }
+
+            const putRequest = objectStore.put(conversation);
+
+            putRequest.onsuccess = () => {
+                console.log('Conversation updated successfully');
+                resolve(conversation);
+            };
+
+            putRequest.onerror = (event) => {
+                console.error('Error updating conversation:', event.target.error);
+                reject(event.target.error);
+            };
+        };
+
+        getRequest.onerror = (event) => {
+            console.error('Error retrieving conversation:', event.target.error);
+            reject(event.target.error);
+        };
+
+        transaction.oncomplete = () => {
+            console.log('Transaction completed: database modification finished.');
+        };
+    });
 }
 
 // Speech recognition setup
