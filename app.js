@@ -138,7 +138,7 @@ async function getUpdatedConversation() {
 function createModelParams(conversation) {
     const messages = conversation.messages.map(msg => ({ role: msg.role, content: msg.content }));
     return {
-        modelId: 'anthropic.claude-3-sonnet-20240229-v1:0',
+        modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
         contentType: 'application/json',
         accept: 'application/json',
         body: JSON.stringify({
