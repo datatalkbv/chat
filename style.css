@@ -1,11 +1,14 @@
-[data-role="assistant"]:hover .bi-clipboard,
-[data-role="user"]:hover .bi-trash {
+[data-role="assistant"]:hover .bi-clipboard {
     display: inline-block;
 }
 
 .bi-clipboard,
 .bi-trash {
     display: none;
+}
+
+[data-role="user"]:hover .bi-trash {
+    display: inline-block;
 }
 
 .markdown-content {
