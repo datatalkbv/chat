@@ -269,7 +269,11 @@ function loadConversations() {
                 <span>${preview}</span>
                 <i class="delete-icon bi bi-trash text-red-500 hover:text-red-700 cursor-pointer"></i>
             `;
-            li.querySelector('span').onclick = () => displayConversation(conversation);
+            li.onclick = (e) => {
+                if (!e.target.classList.contains('delete-icon')) {
+                    displayConversation(conversation);
+                }
+            };
             li.querySelector('.delete-icon').onclick = (e) => {
                 e.stopPropagation();
                 deleteConversation(conversation.id);
@@ -316,6 +320,12 @@ function displayConversation(conversation) {
         const highlightedContent = highlightCode(parsedContent);
         updateChatHistory(message.role, highlightedContent);
     });
+    // Scroll to the bottom of the chat history
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+    // Close the sidebar on mobile after selecting a conversation
+    if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('translate-x-0');
+    }
 }
 
 // Add event listeners after the DOM is fully loaded
