@@ -6,22 +6,25 @@ let db;
 let currentConversationId;
 
 function initDB() {
-    const request = indexedDB.open('ChatApp', 1);
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('ChatApp', 1);
 
-    request.onerror = (event) => {
-        console.error('IndexedDB error:', event.target.error);
-    };
+        request.onerror = (event) => {
+            console.error('IndexedDB error:', event.target.error);
+            reject(event.target.error);
+        };
 
-    request.onsuccess = (event) => {
-        db = event.target.result;
-        loadConversations();
-    };
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            resolve(db);
+        };
 
-    request.onupgradeneeded = (event) => {
-        db = event.target.result;
-        const objectStore = db.createObjectStore('conversations', { keyPath: 'id', autoIncrement: true });
-        objectStore.createIndex('timestamp', 'timestamp', { unique: false });
-    };
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+            const objectStore = db.createObjectStore('conversations', { keyPath: 'id', autoIncrement: true });
+            objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+        };
+    });
 }
 
 function saveCredentials() {
@@ -316,15 +319,15 @@ function displayConversation(conversation) {
 }
 
 // Add event listeners after the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initDB();
+document.addEventListener('DOMContentLoaded', async () => {
+    await initDB();
     checkCredentials();
+    loadConversations();
+
     document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);
     document.getElementById('saveCredentialsBtn').addEventListener('click', saveCredentials);
     document.getElementById('newConversationBtn').addEventListener('click', createNewConversation);
-
-    // Load conversations (which will create a new one by default)
-    loadConversations();
+    document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
 
     // Close modal when clicking outside
     document.getElementById('settingsModal').addEventListener('click', (e) => {
@@ -337,12 +340,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('userInput');
     
     userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            if (!e.shiftKey) {
-                e.preventDefault();
-                if (userInput.value.trim()) {
-                    sendMessage();
-                }
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (userInput.value.trim()) {
+                sendMessage();
             }
         }
     });
