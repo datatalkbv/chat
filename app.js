@@ -485,6 +485,12 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
             trashIcon.innerHTML = '<i class="bi bi-trash"></i>';
             trashIcon.onclick = () => deleteMessageAndSubsequent(messageElement);
             messageElement.appendChild(trashIcon);
+        } else if (role === 'assistant') {
+            const clipboardIcon = document.createElement('button');
+            clipboardIcon.className = 'absolute top-2 right-2 text-gray-500 hover:text-blue-500 transition-colors duration-200';
+            clipboardIcon.innerHTML = '<i class="bi bi-clipboard"></i>';
+            clipboardIcon.onclick = () => copyToClipboard(content);
+            messageElement.appendChild(clipboardIcon);
         }
 
         chatHistory.appendChild(messageElement);
@@ -495,6 +501,19 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
     return messageElement;
+}
+
+function copyToClipboard(text) {
+    // Remove HTML tags from the text
+    const tempElement = document.createElement('div');
+    tempElement.innerHTML = text;
+    const plainText = tempElement.textContent || tempElement.innerText;
+
+    navigator.clipboard.writeText(plainText).then(() => {
+        alert('Message copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+    });
 }
 
 async function deleteMessageAndSubsequent(messageElement) {
