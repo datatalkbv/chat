@@ -210,24 +210,28 @@ function handleModelError(error) {
 
 
 async function createNewConversation() {
-    const transaction = db.transaction(['conversations'], 'readwrite');
-    const objectStore = transaction.objectStore('conversations');
-    const newConversation = { timestamp: Date.now(), messages: [] };
-    const request = objectStore.add(newConversation);
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['conversations'], 'readwrite');
+        const objectStore = transaction.objectStore('conversations');
+        const newConversation = { timestamp: Date.now(), messages: [] };
+        const request = objectStore.add(newConversation);
 
-    request.onsuccess = (event) => {
-        currentConversationId = event.target.result;
-        document.getElementById('chatHistory').innerHTML = '';
-        // Focus on the text chat input
-        document.getElementById('userInput').focus();
-        // Scroll to the bottom of the chat history
-        const chatHistory = document.getElementById('chatHistory');
-        chatHistory.scrollTop = chatHistory.scrollHeight;
-    };
+        request.onsuccess = (event) => {
+            currentConversationId = event.target.result;
+            document.getElementById('chatHistory').innerHTML = '';
+            // Focus on the text chat input
+            document.getElementById('userInput').focus();
+            // Scroll to the bottom of the chat history
+            const chatHistory = document.getElementById('chatHistory');
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            resolve(currentConversationId);
+        };
 
-    request.onerror = (event) => {
-        console.error('Error creating new conversation:', event.target.error);
-    };
+        request.onerror = (event) => {
+            console.error('Error creating new conversation:', event.target.error);
+            reject(event.target.error);
+        };
+    });
 }
 
 async function getConversation(id) {
@@ -247,8 +251,8 @@ async function getConversation(id) {
 }
 
 
-function loadConversations() {
-    const transaction = db.transaction(['conversations'], 'readonly');
+async function loadConversations() {
+    const transaction = db.transaction(['conversations'], 'readwrite');
     const objectStore = transaction.objectStore('conversations');
     const index = objectStore.index('timestamp');
     const request = index.openCursor(null, 'prev');
@@ -256,40 +260,55 @@ function loadConversations() {
     const conversationList = document.getElementById('conversationList');
     conversationList.innerHTML = '';
 
+    const deleteEmptyConversations = [];
+
     request.onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {
             const conversation = cursor.value;
-            const firstUserMessage = conversation.messages.find(msg => msg.role === 'user');
-            const preview = firstUserMessage ? firstUserMessage.content.substring(0, 100) + '...' : 'Empty conversation';
+            if (conversation.messages.length === 0) {
+                deleteEmptyConversations.push(conversation.id);
+            } else {
+                const firstUserMessage = conversation.messages.find(msg => msg.role === 'user');
+                const preview = firstUserMessage ? firstUserMessage.content.substring(0, 100) + '...' : 'Empty conversation';
 
-            const li = document.createElement('li');
-            li.className = 'conversation-item p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded text-gray-800 dark:text-gray-200 flex justify-between items-center';
-            li.innerHTML = `
-                <span>${preview}</span>
-                <i class="delete-icon bi bi-trash text-red-500 hover:text-red-700 cursor-pointer"></i>
-            `;
-            li.onclick = (e) => {
-                if (!e.target.classList.contains('delete-icon')) {
-                    displayConversation(conversation);
-                }
-            };
-            li.querySelector('.delete-icon').onclick = (e) => {
-                e.stopPropagation();
-                deleteConversation(conversation.id);
-            };
-            conversationList.appendChild(li);
-
+                const li = document.createElement('li');
+                li.className = 'conversation-item p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded text-gray-800 dark:text-gray-200 flex justify-between items-center';
+                li.innerHTML = `
+                    <span>${preview}</span>
+                    <i class="delete-icon bi bi-trash text-red-500 hover:text-red-700 cursor-pointer"></i>
+                `;
+                li.onclick = (e) => {
+                    if (!e.target.classList.contains('delete-icon')) {
+                        displayConversation(conversation);
+                    }
+                };
+                li.querySelector('.delete-icon').onclick = (e) => {
+                    e.stopPropagation();
+                    deleteConversation(conversation.id);
+                };
+                conversationList.appendChild(li);
+            }
             cursor.continue();
+        } else {
+            // Delete empty conversations after the cursor is done
+            deleteEmptyConversations.forEach(id => {
+                const deleteRequest = objectStore.delete(id);
+                deleteRequest.onerror = (event) => {
+                    console.error('Error deleting empty conversation:', event.target.error);
+                };
+            });
+            
+            // Create a new conversation if there are no conversations left
+            if (conversationList.children.length === 0) {
+                createNewConversation();
+            }
         }
     };
 
     request.onerror = (event) => {
         console.error('Error loading conversations:', event.target.error);
     };
-
-    // Always create a new conversation when loading
-    createNewConversation();
 }
 
 function deleteConversation(id) {
@@ -332,7 +351,7 @@ function displayConversation(conversation) {
 document.addEventListener('DOMContentLoaded', async () => {
     await initDB();
     checkCredentials();
-    loadConversations();
+    await loadConversations();
 
     const elements = {
         openSettingsBtn: document.getElementById('openSettingsBtn'),
