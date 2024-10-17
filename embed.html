@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentence Embeddings Example</title>
+</head>
+
+<body>
+    <h1>Sentence Embeddings Example</h1>
+    <textarea id="inputText" rows="4" cols="50">Enter your sentence here.</textarea>
+    <br>
+    <button onclick="getEmbedding()">Get Embedding</button>
+    <br>
+    <pre id="output"></pre>
+
+    <script type="module">
+        import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0';
+
+        let extractor;
+
+        // Initialize the pipeline
+        async function init() {
+            extractor = await pipeline(
+                "feature-extraction",
+                "Xenova/all-mpnet-base-v2",
+                { quantized: false }
+            );
+        }
+
+        // Get embedding for the input text
+        async function getEmbedding() {
+            const inputText = document.getElementById('inputText').value;
+            const output = document.getElementById('output');
+
+            if (!extractor) {
+                output.textContent = "Model is still loading. Please wait.";
+                return;
+            }
+
+            try {
+                const result = await extractor(inputText, {
+                    pooling: "mean",
+                    normalize: true
+                });
+
+                output.textContent = JSON.stringify(result.data, null, 2);
+            } catch (error) {
+                output.textContent = "Error: " + error.message;
+            }
+        }
+
+        // Initialize the model when the page loads
+        init();
+
+        // Make getEmbedding function available globally
+        window.getEmbedding = getEmbedding;
+    </script>
+</body>
+
+</html>
