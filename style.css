@@ -116,3 +116,12 @@ body {
 #microphoneBtn.active {
     color: #ef4444; /* red-500 in Tailwind */
 }
+
+#backupBtn, #restoreInput + label {
+    transition: all 0.3s ease;
+}
+
+#backupBtn:hover, #restoreInput + label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

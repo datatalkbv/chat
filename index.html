@@ -75,9 +75,19 @@
                 </div>
                 <div class="items-center px-4 py-3">
                     <button id="saveCredentialsBtn"
-                        class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
-                        <i class="bi bi-check"></i>
+                        class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 mb-2">
+                        Save Credentials
                     </button>
+                    <button id="backupBtn"
+                        class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300 mb-2">
+                        Backup Data
+                    </button>
+                    <label for="restoreInput" class="cursor-pointer">
+                        <div class="px-4 py-2 bg-yellow-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-300 text-center">
+                            Restore Data
+                        </div>
+                    </label>
+                    <input type="file" id="restoreInput" accept=".json" class="hidden">
                 </div>
             </div>
         </div>

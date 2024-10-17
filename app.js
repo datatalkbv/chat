@@ -690,4 +690,118 @@ function loadSystemPrompt() {
 document.getElementById('systemPrompt').addEventListener('input', saveSystemPrompt);
 
 // Load the system prompt when the page loads
-document.addEventListener('DOMContentLoaded', loadSystemPrompt);
+document.addEventListener('DOMContentLoaded', () => {
+    loadSystemPrompt();
+    setupBackupRestore();
+});
+
+function setupBackupRestore() {
+    document.getElementById('backupBtn').addEventListener('click', backupIndexedDB);
+    document.getElementById('restoreInput').addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            restoreIndexedDB(file);
+        }
+    });
+}
+
+async function backupIndexedDB() {
+    const exportObject = {
+        conversations: await getAllConversations(),
+        awsCredentials: getCredentials(),
+        systemPrompt: document.getElementById('systemPrompt').value
+    };
+
+    const blob = new Blob([JSON.stringify(exportObject)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'chatapp-backup.json';
+    a.click();
+}
+
+async function restoreIndexedDB(file) {
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+        try {
+            const importedData = JSON.parse(event.target.result);
+            
+            // Restore conversations
+            await clearAllConversations();
+            for (let conversation of importedData.conversations) {
+                await createNewConversation(conversation);
+            }
+            
+            // Restore AWS credentials
+            if (importedData.awsCredentials) {
+                localStorage.setItem('awsCredentials', JSON.stringify(importedData.awsCredentials));
+            }
+            
+            // Restore system prompt
+            if (importedData.systemPrompt) {
+                document.getElementById('systemPrompt').value = importedData.systemPrompt;
+                saveSystemPrompt();
+            }
+            
+            alert('Data restored successfully!');
+            loadConversations();
+        } catch (error) {
+            console.error('Error restoring data:', error);
+            alert('Error restoring data. Please check the console for details.');
+        }
+    };
+
+    reader.readAsText(file);
+}
+
+async function getAllConversations() {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['conversations'], 'readonly');
+        const objectStore = transaction.objectStore('conversations');
+        const request = objectStore.getAll();
+
+        request.onsuccess = (event) => {
+            resolve(event.target.result);
+        };
+
+        request.onerror = (event) => {
+            reject(event.target.error);
+        };
+    });
+}
+
+async function clearAllConversations() {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['conversations'], 'readwrite');
+        const objectStore = transaction.objectStore('conversations');
+        const request = objectStore.clear();
+
+        request.onsuccess = () => {
+            resolve();
+        };
+
+        request.onerror = (event) => {
+            reject(event.target.error);
+        };
+    });
+}
+
+async function createNewConversation(conversation = null) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['conversations'], 'readwrite');
+        const objectStore = transaction.objectStore('conversations');
+        const newConversation = conversation || { timestamp: Date.now(), messages: [] };
+        const request = objectStore.add(newConversation);
+
+        request.onsuccess = (event) => {
+            const newConversationId = event.target.result;
+            resolve(newConversationId);
+        };
+
+        request.onerror = (event) => {
+            console.error('Error creating new conversation:', event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
