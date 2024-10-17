@@ -106,7 +106,16 @@ function getUserInput() {
 
 function updateUIWithUserMessage(userInput) {
     updateChatHistory('user', userInput);
-    document.getElementById('userInput').value = '';
+    const userInputElement = document.getElementById('userInput');
+    userInputElement.value = '';
+    resetTextareaHeight(userInputElement);
+}
+
+function resetTextareaHeight(textarea) {
+    textarea.style.height = 'auto';
+    const minRows = 3;
+    const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
+    textarea.style.height = `${lineHeight * minRows}px`;
 }
 
 async function updateConversationWithUserMessage(userInput) {
@@ -410,6 +419,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
         sidebar: document.getElementById('sidebar')
     };
+
+    // Initialize the textarea height
+    if (elements.userInput) {
+        resetTextareaHeight(elements.userInput);
+    }
 
     // Check if all elements exist before adding event listeners
     if (elements.openSettingsBtn) {
