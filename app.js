@@ -140,6 +140,7 @@ async function getUpdatedConversation() {
 
 function createModelParams(conversation) {
     const messages = conversation.messages.map(msg => ({ role: msg.role, content: msg.content }));
+    const systemPrompt = document.getElementById('systemPrompt').value;
     return {
         modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
         contentType: 'application/json',
@@ -150,7 +151,7 @@ function createModelParams(conversation) {
             messages: messages,
             temperature: 0.3,
             top_p: 1,
-            system: ''
+            system: systemPrompt
         })
     };
 }
@@ -670,3 +671,23 @@ if (savedScheme) {
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
     setColorScheme(e.matches ? 'dark' : 'light');
 });
+
+// Function to save the system prompt
+function saveSystemPrompt() {
+    const systemPrompt = document.getElementById('systemPrompt').value;
+    localStorage.setItem('systemPrompt', systemPrompt);
+}
+
+// Function to load the system prompt
+function loadSystemPrompt() {
+    const savedSystemPrompt = localStorage.getItem('systemPrompt');
+    if (savedSystemPrompt) {
+        document.getElementById('systemPrompt').value = savedSystemPrompt;
+    }
+}
+
+// Add event listener for system prompt changes
+document.getElementById('systemPrompt').addEventListener('input', saveSystemPrompt);
+
+// Load the system prompt when the page loads
+document.addEventListener('DOMContentLoaded', loadSystemPrompt);
