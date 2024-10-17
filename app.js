@@ -787,21 +787,3 @@ async function clearAllConversations() {
     });
 }
 
-async function createNewConversation(conversation = null) {
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(['conversations'], 'readwrite');
-        const objectStore = transaction.objectStore('conversations');
-        const newConversation = conversation || { timestamp: Date.now(), messages: [] };
-        const request = objectStore.add(newConversation);
-
-        request.onsuccess = (event) => {
-            const newConversationId = event.target.result;
-            resolve(newConversationId);
-        };
-
-        request.onerror = (event) => {
-            console.error('Error creating new conversation:', event.target.error);
-            reject(event.target.error);
-        };
-    });
-}
