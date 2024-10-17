@@ -14,6 +14,7 @@
     <button onclick="getEmbedding()">Get Embedding</button>
     <br>
     <pre id="output"></pre>
+    <div id="timing"></div>
 
     <script type="module">
         import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0';
@@ -33,21 +34,27 @@
         async function getEmbedding() {
             const inputText = document.getElementById('inputText').value;
             const output = document.getElementById('output');
+            const timing = document.getElementById('timing');
 
             if (!extractor) {
                 output.textContent = "Model is still loading. Please wait.";
+                timing.textContent = "";
                 return;
             }
 
             try {
+                const startTime = performance.now();
                 const result = await extractor(inputText, {
                     pooling: "mean",
                     normalize: true
                 });
+                const endTime = performance.now();
 
                 output.textContent = JSON.stringify(result.data, null, 2);
+                timing.textContent = `Embedding time: ${(endTime - startTime).toFixed(2)} ms`;
             } catch (error) {
                 output.textContent = "Error: " + error.message;
+                timing.textContent = "";
             }
         }
 
