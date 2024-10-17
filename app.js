@@ -217,6 +217,9 @@ async function createNewConversation() {
         document.getElementById('chatHistory').innerHTML = '';
         // Focus on the text chat input
         document.getElementById('userInput').focus();
+        // Scroll to the bottom of the chat history
+        const chatHistory = document.getElementById('chatHistory');
+        chatHistory.scrollTop = chatHistory.scrollHeight;
     };
 
     request.onerror = (event) => {
@@ -270,21 +273,16 @@ function loadConversations() {
             };
             conversationList.appendChild(li);
 
-            if (!currentConversationId) {
-                currentConversationId = conversation.id;
-                displayConversation(conversation);
-            }
-
             cursor.continue();
-        } else if (!currentConversationId) {
-            createNewConversation();
         }
     };
 
     request.onerror = (event) => {
         console.error('Error loading conversations:', event.target.error);
-        createNewConversation();
     };
+
+    // Always create a new conversation when loading
+    createNewConversation();
 }
 
 function deleteConversation(id) {
@@ -325,8 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('saveCredentialsBtn').addEventListener('click', saveCredentials);
     document.getElementById('newConversationBtn').addEventListener('click', createNewConversation);
 
-    // Focus the text input when the page loads
-    document.getElementById('userInput').focus();
+    // Load conversations (which will create a new one by default)
+    loadConversations();
 
     // Close modal when clicking outside
     document.getElementById('settingsModal').addEventListener('click', (e) => {
