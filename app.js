@@ -210,22 +210,25 @@ function handleModelError(error) {
 }
 
 
-async function createNewConversation() {
+async function createNewConversation(existingConversation = null) {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['conversations'], 'readwrite');
         const objectStore = transaction.objectStore('conversations');
-        const newConversation = { timestamp: Date.now(), messages: [] };
+        const newConversation = existingConversation || { timestamp: Date.now(), messages: [] };
         const request = objectStore.add(newConversation);
 
         request.onsuccess = (event) => {
             const newConversationId = event.target.result;
             currentConversationId = newConversationId;
-            document.getElementById('chatHistory').innerHTML = '';
-            // Focus on the text chat input
-            document.getElementById('userInput').focus();
-            // Scroll to the bottom of the chat history
-            const chatHistory = document.getElementById('chatHistory');
-            chatHistory.scrollTop = chatHistory.scrollHeight;
+            if (!existingConversation) {
+                document.getElementById('chatHistory').innerHTML = '';
+                // Focus on the text chat input
+                document.getElementById('userInput').focus();
+                // Scroll to the bottom of the chat history
+                const chatHistory = document.getElementById('chatHistory');
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+            console.log('New conversation created with ID:', newConversationId);
             resolve(newConversationId);
         };
 
@@ -270,6 +273,7 @@ async function loadConversations() {
         const cursor = event.target.result;
         if (cursor) {
             const conversation = cursor.value;
+            console.log('Loading conversation:', conversation);
             if (conversation.messages.length === 0) {
                 deleteEmptyConversations.push(conversation.id);
             } else {
@@ -299,6 +303,7 @@ async function loadConversations() {
             }
             cursor.continue();
         } else {
+            console.log('Finished loading conversations');
             // Delete empty conversations after the cursor is done
             for (const id of deleteEmptyConversations) {
                 await new Promise((resolve, reject) => {
@@ -313,10 +318,12 @@ async function loadConversations() {
             
             // Create a new conversation only if there are no non-empty conversations
             if (!hasNonEmptyConversations) {
+                console.log('No non-empty conversations found, creating a new one');
                 const newConversationId = await createNewConversation();
                 const newConversation = await getConversation(newConversationId);
                 displayConversation(newConversation);
             } else if (!currentConversationId && firstNonEmptyConversation) {
+                console.log('Displaying first non-empty conversation');
                 // If there's no current conversation, display the first non-empty one
                 displayConversation(firstNonEmptyConversation);
             }
@@ -726,26 +733,38 @@ async function restoreIndexedDB(file) {
     reader.onload = async (event) => {
         try {
             const importedData = JSON.parse(event.target.result);
+            console.log('Imported data:', importedData);
             
             // Restore conversations
             await clearAllConversations();
             for (let conversation of importedData.conversations) {
+                console.log('Restoring conversation:', conversation);
                 await createNewConversation(conversation);
             }
             
             // Restore AWS credentials
             if (importedData.awsCredentials) {
                 localStorage.setItem('awsCredentials', JSON.stringify(importedData.awsCredentials));
+                console.log('AWS credentials restored');
             }
             
             // Restore system prompt
             if (importedData.systemPrompt) {
                 document.getElementById('systemPrompt').value = importedData.systemPrompt;
                 saveSystemPrompt();
+                console.log('System prompt restored');
             }
             
             alert('Data restored successfully!');
-            loadConversations();
+            await loadConversations();
+            console.log('Conversations loaded after restore');
+            
+            // Force a refresh of the conversation list
+            const firstConversation = await getFirstConversation();
+            if (firstConversation) {
+                displayConversation(firstConversation);
+                console.log('First conversation displayed');
+            }
         } catch (error) {
             console.error('Error restoring data:', error);
             alert('Error restoring data. Please check the console for details.');
