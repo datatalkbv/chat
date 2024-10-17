@@ -217,14 +217,15 @@ async function createNewConversation() {
         const request = objectStore.add(newConversation);
 
         request.onsuccess = (event) => {
-            currentConversationId = event.target.result;
+            const newConversationId = event.target.result;
+            currentConversationId = newConversationId;
             document.getElementById('chatHistory').innerHTML = '';
             // Focus on the text chat input
             document.getElementById('userInput').focus();
             // Scroll to the bottom of the chat history
             const chatHistory = document.getElementById('chatHistory');
             chatHistory.scrollTop = chatHistory.scrollHeight;
-            resolve(currentConversationId);
+            resolve(newConversationId);
         };
 
         request.onerror = (event) => {
@@ -262,6 +263,7 @@ async function loadConversations() {
 
     const deleteEmptyConversations = [];
     let hasNonEmptyConversations = false;
+    let firstNonEmptyConversation = null;
 
     request.onsuccess = async (event) => {
         const cursor = event.target.result;
@@ -271,6 +273,9 @@ async function loadConversations() {
                 deleteEmptyConversations.push(conversation.id);
             } else {
                 hasNonEmptyConversations = true;
+                if (!firstNonEmptyConversation) {
+                    firstNonEmptyConversation = conversation;
+                }
                 const firstUserMessage = conversation.messages.find(msg => msg.role === 'user');
                 const preview = firstUserMessage ? firstUserMessage.content.substring(0, 100) + '...' : 'Empty conversation';
 
@@ -307,15 +312,12 @@ async function loadConversations() {
             
             // Create a new conversation only if there are no non-empty conversations
             if (!hasNonEmptyConversations) {
-                await createNewConversation();
-                // Reload conversations to display the new one
-                await loadConversations();
-            } else if (!currentConversationId) {
-                // If there's no current conversation, display the first one
-                const firstConversation = await getFirstConversation();
-                if (firstConversation) {
-                    displayConversation(firstConversation);
-                }
+                const newConversationId = await createNewConversation();
+                const newConversation = await getConversation(newConversationId);
+                displayConversation(newConversation);
+            } else if (!currentConversationId && firstNonEmptyConversation) {
+                // If there's no current conversation, display the first non-empty one
+                displayConversation(firstNonEmptyConversation);
             }
         }
     };
