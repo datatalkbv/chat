@@ -444,6 +444,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         });
+        
+        // Add event listener for input to handle auto-resizing
+        elements.userInput.addEventListener('input', autoResizeTextarea);
+        
+        // Initial call to set correct height
+        autoResizeTextarea.call(elements.userInput);
     }
 
     // Mobile sidebar toggle
@@ -469,6 +475,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
+
+function autoResizeTextarea() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+    
+    const maxRows = parseInt(this.getAttribute('data-max-rows') || 15);
+    const lineHeight = parseInt(window.getComputedStyle(this).lineHeight);
+    const maxHeight = lineHeight * maxRows;
+    
+    if (this.scrollHeight > maxHeight) {
+        this.style.height = maxHeight + 'px';
+        this.style.overflowY = 'auto';
+    } else {
+        this.style.overflowY = 'hidden';
+    }
+    
+    // Ensure minimum height of 3 lines
+    const minHeight = lineHeight * 3;
+    if (parseInt(this.style.height) < minHeight) {
+        this.style.height = minHeight + 'px';
+    }
+}
 
 // Update the updateChatHistory function to create message bubbles and handle streaming with markdown
 function updateChatHistory(role, content, isStreaming = false, existingElement = null) {
