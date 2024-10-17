@@ -261,14 +261,16 @@ async function loadConversations() {
     conversationList.innerHTML = '';
 
     const deleteEmptyConversations = [];
+    let hasNonEmptyConversations = false;
 
-    request.onsuccess = (event) => {
+    request.onsuccess = async (event) => {
         const cursor = event.target.result;
         if (cursor) {
             const conversation = cursor.value;
             if (conversation.messages.length === 0) {
                 deleteEmptyConversations.push(conversation.id);
             } else {
+                hasNonEmptyConversations = true;
                 const firstUserMessage = conversation.messages.find(msg => msg.role === 'user');
                 const preview = firstUserMessage ? firstUserMessage.content.substring(0, 100) + '...' : 'Empty conversation';
 
@@ -292,16 +294,28 @@ async function loadConversations() {
             cursor.continue();
         } else {
             // Delete empty conversations after the cursor is done
-            deleteEmptyConversations.forEach(id => {
-                const deleteRequest = objectStore.delete(id);
-                deleteRequest.onerror = (event) => {
-                    console.error('Error deleting empty conversation:', event.target.error);
-                };
-            });
+            for (const id of deleteEmptyConversations) {
+                await new Promise((resolve, reject) => {
+                    const deleteRequest = objectStore.delete(id);
+                    deleteRequest.onsuccess = resolve;
+                    deleteRequest.onerror = (event) => {
+                        console.error('Error deleting empty conversation:', event.target.error);
+                        reject(event.target.error);
+                    };
+                });
+            }
             
-            // Create a new conversation if there are no conversations left
-            if (conversationList.children.length === 0) {
-                createNewConversation();
+            // Create a new conversation only if there are no non-empty conversations
+            if (!hasNonEmptyConversations) {
+                await createNewConversation();
+                // Reload conversations to display the new one
+                await loadConversations();
+            } else if (!currentConversationId) {
+                // If there's no current conversation, display the first one
+                const firstConversation = await getFirstConversation();
+                if (firstConversation) {
+                    displayConversation(firstConversation);
+                }
             }
         }
     };
@@ -309,6 +323,29 @@ async function loadConversations() {
     request.onerror = (event) => {
         console.error('Error loading conversations:', event.target.error);
     };
+}
+
+async function getFirstConversation() {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['conversations'], 'readonly');
+        const objectStore = transaction.objectStore('conversations');
+        const index = objectStore.index('timestamp');
+        const request = index.openCursor(null, 'prev');
+
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+                resolve(cursor.value);
+            } else {
+                resolve(null);
+            }
+        };
+
+        request.onerror = (event) => {
+            console.error('Error getting first conversation:', event.target.error);
+            reject(event.target.error);
+        };
+    });
 }
 
 function deleteConversation(id) {
