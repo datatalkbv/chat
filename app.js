@@ -324,44 +324,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkCredentials();
     loadConversations();
 
-    document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);
-    document.getElementById('saveCredentialsBtn').addEventListener('click', saveCredentials);
-    document.getElementById('newConversationBtn').addEventListener('click', createNewConversation);
-    document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
+    const elements = {
+        openSettingsBtn: document.getElementById('openSettingsBtn'),
+        saveCredentialsBtn: document.getElementById('saveCredentialsBtn'),
+        newConversationBtn: document.getElementById('newConversationBtn'),
+        sendMessageBtn: document.getElementById('sendMessageBtn'),
+        settingsModal: document.getElementById('settingsModal'),
+        userInput: document.getElementById('userInput'),
+        toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
+        sidebar: document.getElementById('sidebar')
+    };
+
+    // Check if all elements exist before adding event listeners
+    if (elements.openSettingsBtn) {
+        elements.openSettingsBtn.addEventListener('click', openSettingsModal);
+    }
+    if (elements.saveCredentialsBtn) {
+        elements.saveCredentialsBtn.addEventListener('click', saveCredentials);
+    }
+    if (elements.newConversationBtn) {
+        elements.newConversationBtn.addEventListener('click', createNewConversation);
+    }
+    if (elements.sendMessageBtn) {
+        elements.sendMessageBtn.addEventListener('click', sendMessage);
+    }
 
     // Close modal when clicking outside
-    document.getElementById('settingsModal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('settingsModal')) {
-            closeSettingsModal();
-        }
-    });
+    if (elements.settingsModal) {
+        elements.settingsModal.addEventListener('click', (e) => {
+            if (e.target === elements.settingsModal) {
+                closeSettingsModal();
+            }
+        });
+    }
 
     // Handle Enter key to send message and Shift+Enter for new line
-    const userInput = document.getElementById('userInput');
-    
-    userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (userInput.value.trim()) {
-                sendMessage();
+    if (elements.userInput) {
+        elements.userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (elements.userInput.value.trim()) {
+                    sendMessage();
+                }
             }
-        }
-    });
+        });
+    }
 
     // Mobile sidebar toggle
-    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
-    const sidebar = document.getElementById('sidebar');
+    if (elements.toggleSidebarBtn && elements.sidebar) {
+        elements.toggleSidebarBtn.addEventListener('click', () => {
+            elements.sidebar.classList.toggle('translate-x-0');
+        });
 
-    toggleSidebarBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('translate-x-0');
-    });
-
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', (e) => {
-        if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !toggleSidebarBtn.contains(e.target)) {
-            sidebar.classList.remove('translate-x-0');
-        }
-    });
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && !elements.sidebar.contains(e.target) && !elements.toggleSidebarBtn.contains(e.target)) {
+                elements.sidebar.classList.remove('translate-x-0');
+            }
+        });
+    }
 
     // Adjust layout when virtual keyboard appears
     window.addEventListener('resize', () => {
