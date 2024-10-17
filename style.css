@@ -1,10 +1,10 @@
-.conversation-item:hover .delete-icon,
-[data-role="assistant"]:hover .bi-clipboard {
+[data-role="assistant"]:hover .bi-clipboard,
+[data-role="user"]:hover .bi-trash {
     display: inline-block;
 }
 
-.delete-icon,
-.bi-clipboard {
+.bi-clipboard,
+.bi-trash {
     display: none;
 }
 
