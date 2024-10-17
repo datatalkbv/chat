@@ -715,7 +715,6 @@ function setupBackupRestore() {
 async function backupIndexedDB() {
     const exportObject = {
         conversations: await getAllConversations(),
-        awsCredentials: getCredentials(),
         systemPrompt: document.getElementById('systemPrompt').value
     };
 
@@ -740,12 +739,6 @@ async function restoreIndexedDB(file) {
             for (let conversation of importedData.conversations) {
                 console.log('Restoring conversation:', conversation);
                 await createNewConversation(conversation);
-            }
-            
-            // Restore AWS credentials
-            if (importedData.awsCredentials) {
-                localStorage.setItem('awsCredentials', JSON.stringify(importedData.awsCredentials));
-                console.log('AWS credentials restored');
             }
             
             // Restore system prompt
