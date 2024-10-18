@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +13,16 @@
             border: none;
             border-bottom: 1px solid #e2e8f0;
         }
+
         .ql-container.ql-snow {
             border: none;
         }
+
         .ql-editor {
             font-size: 16px;
             line-height: 1.6;
         }
+
         .word-count {
             font-size: 12px;
             color: #718096;
@@ -29,24 +33,30 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-100 h-screen flex">
     <div class="flex w-full h-full">
         <!-- Sidebar -->
         <div class="w-64 bg-white border-r border-gray-200 p-4 flex flex-col">
             <h1 class="text-2xl font-bold mb-4 text-gray-800">Notes</h1>
-            <button id="newNoteBtn" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-600 transition duration-300">New Note</button>
+            <button id="newNoteBtn"
+                class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-600 transition duration-300">New
+                Note</button>
             <ul id="noteList" class="overflow-y-auto flex-grow"></ul>
         </div>
 
         <!-- Main content -->
         <div class="flex-grow flex flex-col bg-white">
             <div class="p-4 border-b border-gray-200">
-                <input id="noteTitle" type="text" placeholder="Note Title" class="w-full text-xl font-semibold outline-none text-gray-800">
+                <input id="noteTitle" type="text" placeholder="Note Title"
+                    class="w-full text-xl font-semibold outline-none text-gray-800">
             </div>
             <div id="editor" class="flex-grow"></div>
             <div class="flex justify-between items-center word-count">
                 <div id="wordCount"></div>
-                <button id="copyHtmlBtn" class="bg-blue-500 text-white py-1 px-2 rounded text-sm hover:bg-blue-600 transition duration-300">Copy HTML</button>
+                <button id="copyHtmlBtn"
+                    class="bg-blue-500 text-white py-1 px-2 rounded text-sm hover:bg-blue-600 transition duration-300">Copy
+                    HTML</button>
             </div>
         </div>
     </div>
@@ -99,9 +109,9 @@
                     [{ 'header': [1, 2, 3, false] }],
                     ['bold', 'italic', 'underline', 'strike'],
                     ['blockquote', 'code-block'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'script': 'sub'}, { 'script': 'super' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    [{ 'script': 'sub' }, { 'script': 'super' }],
+                    [{ 'indent': '-1' }, { 'indent': '+1' }],
                     [{ 'color': [] }, { 'background': [] }],
                     ['image', 'link'],
                     ['clean']
@@ -250,4 +260,5 @@
         }
     </script>
 </body>
+
 </html>
