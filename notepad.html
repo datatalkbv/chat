@@ -15,23 +15,36 @@
         .ql-container.ql-snow {
             border: none;
         }
+        .ql-editor {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .word-count {
+            font-size: 12px;
+            color: #718096;
+            text-align: right;
+            padding: 4px 8px;
+            background-color: #f7fafc;
+            border-top: 1px solid #e2e8f0;
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex">
     <div class="flex w-full h-full">
         <!-- Sidebar -->
         <div class="w-64 bg-white border-r border-gray-200 p-4 flex flex-col">
-            <h1 class="text-2xl font-bold mb-4">Notes</h1>
-            <button id="newNoteBtn" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-600">New Note</button>
+            <h1 class="text-2xl font-bold mb-4 text-gray-800">Notes</h1>
+            <button id="newNoteBtn" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-600 transition duration-300">New Note</button>
             <ul id="noteList" class="overflow-y-auto flex-grow"></ul>
         </div>
 
         <!-- Main content -->
-        <div class="flex-grow flex flex-col">
-            <div class="bg-white p-4 border-b border-gray-200">
-                <input id="noteTitle" type="text" placeholder="Note Title" class="w-full text-xl font-semibold outline-none">
+        <div class="flex-grow flex flex-col bg-white">
+            <div class="p-4 border-b border-gray-200">
+                <input id="noteTitle" type="text" placeholder="Note Title" class="w-full text-xl font-semibold outline-none text-gray-800">
             </div>
             <div id="editor" class="flex-grow"></div>
+            <div id="wordCount" class="word-count"></div>
         </div>
     </div>
 
@@ -63,12 +76,33 @@
             theme: 'snow',
             modules: {
                 toolbar: [
-                    [{ 'header': [1, 2, false] }],
-                    ['bold', 'italic', 'underline'],
-                    ['image', 'code-block']
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    ['image', 'link'],
+                    ['clean']
                 ]
             }
         });
+
+        // Word count feature
+        function updateWordCount() {
+            const text = quill.getText();
+            const words = text.trim().split(/\s+/).length;
+            document.getElementById('wordCount').textContent = `Words: ${words}`;
+        }
+
+        quill.on('text-change', debounce(() => {
+            updateWordCount();
+            saveNote();
+        }, 500));
+
+        // Initial word count
+        updateWordCount();
 
         // Event Listeners
         document.getElementById('newNoteBtn').addEventListener('click', createNewNote);
