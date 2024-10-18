@@ -570,14 +570,31 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
         bubble.innerHTML = escapedContent.replace(/\n/g, '<br>');
         bubble.style.whiteSpace = 'pre-wrap';
     } else {
-        // For assistant messages, we directly set the HTML content
-        // as it's already been parsed by marked in displayConversation
-        bubble.innerHTML = content;
+        // For assistant messages, escape HTML except for content within ``` blocks
+        bubble.innerHTML = escapeHtmlExceptCodeBlocks(content);
     }
 
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
     return messageElement;
+}
+
+function escapeHtmlExceptCodeBlocks(content) {
+    const codeBlockRegex = /```[\s\S]*?```/g;
+    const codeBlocks = content.match(codeBlockRegex) || [];
+    const textParts = content.split(codeBlockRegex);
+
+    const escapedParts = textParts.map(part => escapeHtml(part));
+
+    let result = '';
+    for (let i = 0; i < escapedParts.length; i++) {
+        result += escapedParts[i];
+        if (i < codeBlocks.length) {
+            result += codeBlocks[i];
+        }
+    }
+
+    return result;
 }
 
 // Helper function to escape HTML
