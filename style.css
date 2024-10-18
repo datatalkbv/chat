@@ -120,11 +120,45 @@ body {
     color: #ef4444; /* red-500 in Tailwind */
 }
 
-#backupBtn, #restoreInput + label {
+#settingsModal {
+    backdrop-filter: blur(5px);
+}
+
+#settingsModal .relative {
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#backupBtn, #restoreInput + label, #saveCredentialsBtn {
     transition: all 0.3s ease;
 }
 
-#backupBtn:hover, #restoreInput + label:hover {
+#backupBtn:hover, #restoreInput + label:hover, #saveCredentialsBtn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#closeSettingsBtn {
+    transition: all 0.2s ease;
+}
+
+#closeSettingsBtn:hover {
+    transform: rotate(90deg);
+}
+
+@media (max-width: 640px) {
+    #settingsModal .relative {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
 }

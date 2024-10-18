@@ -412,6 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const elements = {
         openSettingsBtn: document.getElementById('openSettingsBtn'),
+        closeSettingsBtn: document.getElementById('closeSettingsBtn'),
         saveCredentialsBtn: document.getElementById('saveCredentialsBtn'),
         newConversationBtn: document.getElementById('newConversationBtn'),
         sendMessageBtn: document.getElementById('sendMessageBtn'),
@@ -437,6 +438,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check if all elements exist before adding event listeners
     if (elements.openSettingsBtn) {
         elements.openSettingsBtn.addEventListener('click', openSettingsModal);
+    }
+    if (elements.closeSettingsBtn) {
+        elements.closeSettingsBtn.addEventListener('click', closeSettingsModal);
     }
     if (elements.saveCredentialsBtn) {
         elements.saveCredentialsBtn.addEventListener('click', saveCredentials);
