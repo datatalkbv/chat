@@ -136,13 +136,15 @@
         function saveNote() {
             const title = document.getElementById('noteTitle').value;
             const content = quill.getContents();
+            const htmlContent = quill.root.innerHTML;
 
             const transaction = db.transaction(['notes'], 'readwrite');
             const objectStore = transaction.objectStore('notes');
 
             const note = {
                 title: title,
-                content: content
+                content: content,
+                html: htmlContent
             };
 
             if (currentNoteId !== null) {
