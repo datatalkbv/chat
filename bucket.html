@@ -3,6 +3,11 @@
 
 <head>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-3.188.0.min.js"></script>
+    <script type="module">
+        import { S3Client, PutObjectCommand } from "https://sdk.amazonaws.com/js/aws-sdk-3.188.0.mjs";
+        window.S3Client = S3Client;
+        window.PutObjectCommand = PutObjectCommand;
+    </script>
 </head>
 
 <body>
@@ -17,8 +22,6 @@
             const accessKeyId = document.getElementById('accessKeyId').value;
             const secretAccessKey = document.getElementById('secretAccessKey').value;
             const file = document.getElementById('fileInput').files[0];
-
-            const { S3Client, PutObjectCommand } = AWS.S3;
 
             const client = new S3Client({
                 region: 'eu-west-3', // replace with your region
