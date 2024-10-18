@@ -563,7 +563,8 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
     
     if (role === 'user') {
         // Escape HTML and preserve newlines for user messages
-        bubble.textContent = content;
+        const escapedContent = escapeHtml(content);
+        bubble.innerHTML = escapedContent.replace(/\n/g, '<br>');
         bubble.style.whiteSpace = 'pre-wrap';
     } else {
         // For assistant messages, we still want to render markdown
@@ -573,6 +574,16 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
     return messageElement;
+}
+
+// Helper function to escape HTML
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
 }
 
 function copyToClipboard(text) {
