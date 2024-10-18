@@ -926,11 +926,3 @@ if (savedScheme) {
 } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     setColorScheme('dark');
 }
-function escapeHtml(unsafe) {
-    return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
-}
