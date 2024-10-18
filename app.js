@@ -224,6 +224,7 @@ async function createNewConversation(existingConversation = null) {
         const transaction = db.transaction(['conversations'], 'readwrite');
         const objectStore = transaction.objectStore('conversations');
         const newConversation = existingConversation || { timestamp: Date.now(), messages: [] };
+        console.log(newConversation);
         const request = objectStore.add(newConversation);
 
         request.onsuccess = (event) => {
@@ -425,6 +426,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         resetTextareaHeight(elements.userInput);
     }
 
+    function onNewConversationClick(event) {
+        createNewConversation().then(newConversationId => {
+            getConversation(newConversationId).then(newConversation => {
+                displayConversation(newConversation);
+            });
+        });
+    }
+
     // Check if all elements exist before adding event listeners
     if (elements.openSettingsBtn) {
         elements.openSettingsBtn.addEventListener('click', openSettingsModal);
@@ -433,7 +442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.saveCredentialsBtn.addEventListener('click', saveCredentials);
     }
     if (elements.newConversationBtn) {
-        elements.newConversationBtn.addEventListener('click', createNewConversation);
+        elements.newConversationBtn.addEventListener('click', onNewConversationClick);
     }
     if (elements.sendMessageBtn) {
         elements.sendMessageBtn.addEventListener('click', sendMessage);
