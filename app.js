@@ -573,12 +573,21 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
         // For assistant messages, parse markdown and highlight code
         const renderer = new marked.Renderer();
         renderer.code = (code, language) => {
+            if (typeof code !== 'string') {
+                console.warn('Invalid code block:', code);
+                return '';
+            }
             let validLanguage = 'plaintext';
             if (language && hljs.getLanguage(language)) {
                 validLanguage = language;
             }
-            const highlightedCode = hljs.highlight(code, { language: validLanguage }).value;
-            return `<pre><code class="hljs language-${validLanguage}">${highlightedCode}</code></pre>`;
+            try {
+                const highlightedCode = hljs.highlight(code, { language: validLanguage }).value;
+                return `<pre><code class="hljs language-${validLanguage}">${highlightedCode}</code></pre>`;
+            } catch (error) {
+                console.error('Error highlighting code:', error);
+                return `<pre><code class="hljs language-${validLanguage}">${escapeHtml(code)}</code></pre>`;
+            }
         };
 
         marked.setOptions({
@@ -916,4 +925,12 @@ if (savedScheme) {
     setColorScheme(savedScheme);
 } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     setColorScheme('dark');
+}
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
 }
