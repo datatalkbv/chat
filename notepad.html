@@ -54,7 +54,7 @@
         let currentNoteId = null;
 
         // Initialize IndexedDB
-        const request = indexedDB.open('NotepadDB', 1);
+        const request = indexedDB.open('NotepadDB', 2);
 
         request.onerror = (event) => {
             console.error("IndexedDB error:", event.target.error);
@@ -67,8 +67,25 @@
 
         request.onupgradeneeded = (event) => {
             db = event.target.result;
-            const objectStore = db.createObjectStore('notes', { keyPath: 'id', autoIncrement: true });
-            objectStore.createIndex('title', 'title', { unique: false });
+            if (event.oldVersion < 1) {
+                const objectStore = db.createObjectStore('notes', { keyPath: 'id', autoIncrement: true });
+                objectStore.createIndex('title', 'title', { unique: false });
+            }
+            if (event.oldVersion < 2) {
+                const transaction = event.target.transaction;
+                const store = transaction.objectStore('notes');
+                store.openCursor().onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if (cursor) {
+                        if (!cursor.value.html) {
+                            const updatedNote = cursor.value;
+                            updatedNote.html = '';  // Or some default HTML if you prefer
+                            cursor.update(updatedNote);
+                        }
+                        cursor.continue();
+                    }
+                };
+            }
         };
 
         // Initialize Quill editor
@@ -181,6 +198,9 @@
                 currentNoteId = note.id;
                 document.getElementById('noteTitle').value = note.title;
                 quill.setContents(note.content);
+                // You can use the HTML content if needed, for example:
+                // quill.root.innerHTML = note.html;
+                updateWordCount();
             };
         }
 
