@@ -573,8 +573,11 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
         // For assistant messages, parse markdown and highlight code
         const renderer = new marked.Renderer();
         renderer.code = (code, language) => {
-            const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
-            const highlightedCode = hljs.highlight(validLanguage, code).value;
+            let validLanguage = 'plaintext';
+            if (language && hljs.getLanguage(language)) {
+                validLanguage = language;
+            }
+            const highlightedCode = hljs.highlight(code, { language: validLanguage }).value;
             return `<pre><code class="hljs language-${validLanguage}">${highlightedCode}</code></pre>`;
         };
 
@@ -582,7 +585,8 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
             renderer: renderer,
             highlight: null, // Disable default highlighting
             breaks: true,
-            gfm: true
+            gfm: true,
+            langPrefix: 'language-'
         });
 
         const parsedContent = marked.parse(content);
