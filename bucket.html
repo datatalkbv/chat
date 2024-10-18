@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.7.20.min.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-3.188.0.min.js"></script>
 </head>
 
 <body>
@@ -13,18 +13,20 @@
     <div id="urlDisplay"></div>
 
     <script>
-        function uploadFile() {
+        async function uploadFile() {
             const accessKeyId = document.getElementById('accessKeyId').value;
             const secretAccessKey = document.getElementById('secretAccessKey').value;
             const file = document.getElementById('fileInput').files[0];
 
-            AWS.config.update({
-                accessKeyId: accessKeyId,
-                secretAccessKey: secretAccessKey,
-                region: 'eu-west-3' // replace with your region
-            });
+            const { S3Client, PutObjectCommand } = AWS.S3;
 
-            const s3 = new AWS.S3();
+            const client = new S3Client({
+                region: 'eu-west-3', // replace with your region
+                credentials: {
+                    accessKeyId: accessKeyId,
+                    secretAccessKey: secretAccessKey
+                }
+            });
 
             const params = {
                 Bucket: 'datatalkstatic', // replace with your bucket name
@@ -33,17 +35,17 @@
                 ACL: 'public-read'
             };
 
-            s3.upload(params, function (err, data) {
-                if (err) {
-                    console.log("Error", err);
-                    document.getElementById('urlDisplay').textContent = "Error uploading file: " + err.message;
-                } if (data) {
-                    console.log("Upload Success", data.Location);
-                    const publicUrl = `https://${params.Bucket}.s3.amazonaws.com/${encodeURIComponent(params.Key)}`;
-                    console.log("Public URL:", publicUrl);
-                    document.getElementById('urlDisplay').textContent = "Public URL: " + publicUrl;
-                }
-            });
+            try {
+                const command = new PutObjectCommand(params);
+                const response = await client.send(command);
+                console.log("Upload Success", response);
+                const publicUrl = `https://${params.Bucket}.s3.amazonaws.com/${encodeURIComponent(params.Key)}`;
+                console.log("Public URL:", publicUrl);
+                document.getElementById('urlDisplay').textContent = "Public URL: " + publicUrl;
+            } catch (err) {
+                console.log("Error", err);
+                document.getElementById('urlDisplay').textContent = "Error uploading file: " + err.message;
+            }
         }
     </script>
 </body>
