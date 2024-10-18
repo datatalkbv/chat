@@ -571,8 +571,22 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
         bubble.style.whiteSpace = 'pre-wrap';
     } else {
         // For assistant messages, parse markdown and highlight code
+        const renderer = new marked.Renderer();
+        renderer.code = (code, language) => {
+            const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
+            const highlightedCode = hljs.highlight(validLanguage, code).value;
+            return `<pre><code class="hljs language-${validLanguage}">${highlightedCode}</code></pre>`;
+        };
+
+        marked.setOptions({
+            renderer: renderer,
+            highlight: null, // Disable default highlighting
+            breaks: true,
+            gfm: true
+        });
+
         const parsedContent = marked.parse(content);
-        bubble.innerHTML = highlightCode(parsedContent);
+        bubble.innerHTML = parsedContent;
     }
 
     chatHistory.scrollTop = chatHistory.scrollHeight;
