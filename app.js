@@ -570,13 +570,23 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
         bubble.innerHTML = escapedContent.replace(/\n/g, '<br>');
         bubble.style.whiteSpace = 'pre-wrap';
     } else {
-        // For assistant messages, escape HTML except for content within ``` blocks
-        bubble.innerHTML = escapeHtmlExceptCodeBlocks(content);
+        // For assistant messages, parse markdown and highlight code
+        const parsedContent = marked.parse(content);
+        bubble.innerHTML = highlightCode(parsedContent);
     }
 
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
     return messageElement;
+}
+
+function highlightCode(content) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    tempDiv.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+    return tempDiv.innerHTML;
 }
 
 function escapeHtmlExceptCodeBlocks(content) {
