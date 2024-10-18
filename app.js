@@ -573,6 +573,9 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
         // For assistant messages, parse markdown and highlight code
         const renderer = new marked.Renderer();
         renderer.code = (code, language) => {
+            if (typeof code === 'object' && code.text) {
+                code = code.text;
+            }
             if (typeof code !== 'string') {
                 console.warn('Invalid code block:', code);
                 return '';
