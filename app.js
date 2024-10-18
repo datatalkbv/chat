@@ -586,7 +586,9 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
             }
             try {
                 const highlightedCode = hljs.highlight(code, { language: validLanguage }).value;
-                return `<pre><code class="hljs language-${validLanguage}">${highlightedCode}</code></pre>`;
+                // Remove any existing <code> tags within the highlighted code
+                const cleanedCode = highlightedCode.replace(/<\/?code>/g, '');
+                return `<pre><code class="hljs language-${validLanguage}">${cleanedCode}</code></pre>`;
             } catch (error) {
                 console.error('Error highlighting code:', error);
                 return `<pre><code class="hljs language-${validLanguage}">${escapeHtml(code)}</code></pre>`;
