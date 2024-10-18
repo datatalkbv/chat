@@ -539,7 +539,7 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
             role === 'user' 
                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
                 : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-        } markdown-content`;
+        } ${role === 'user' ? 'user-content' : 'markdown-content'}`;
         messageElement.appendChild(bubble);
 
         if (role === 'user') {
@@ -559,8 +559,17 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
         chatHistory.appendChild(messageElement);
     }
 
-    const bubble = messageElement.querySelector('.markdown-content');
-    bubble.innerHTML = content;
+    const bubble = messageElement.querySelector(role === 'user' ? '.user-content' : '.markdown-content');
+    
+    if (role === 'user') {
+        // Escape HTML and preserve newlines for user messages
+        bubble.textContent = content;
+        bubble.style.whiteSpace = 'pre-wrap';
+    } else {
+        // For assistant messages, we still want to render markdown
+        bubble.innerHTML = content;
+    }
+
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
     return messageElement;
