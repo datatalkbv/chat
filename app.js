@@ -392,9 +392,12 @@ function displayConversation(conversation) {
     const chatHistory = document.getElementById('chatHistory');
     chatHistory.innerHTML = '';
     conversation.messages.forEach(message => {
-        const parsedContent = marked.parse(message.content);
-        const highlightedContent = highlightCode(parsedContent);
-        updateChatHistory(message.role, highlightedContent);
+        let content = message.content;
+        if (message.role === 'assistant') {
+            content = marked.parse(content);
+            content = highlightCode(content);
+        }
+        updateChatHistory(message.role, content);
     });
     // Scroll to the bottom of the chat history
     chatHistory.scrollTop = chatHistory.scrollHeight;
@@ -567,7 +570,8 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
         bubble.innerHTML = escapedContent.replace(/\n/g, '<br>');
         bubble.style.whiteSpace = 'pre-wrap';
     } else {
-        // For assistant messages, we still want to render markdown
+        // For assistant messages, we directly set the HTML content
+        // as it's already been parsed by marked in displayConversation
         bubble.innerHTML = content;
     }
 
