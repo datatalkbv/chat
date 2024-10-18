@@ -44,7 +44,10 @@
                 <input id="noteTitle" type="text" placeholder="Note Title" class="w-full text-xl font-semibold outline-none text-gray-800">
             </div>
             <div id="editor" class="flex-grow"></div>
-            <div id="wordCount" class="word-count"></div>
+            <div class="flex justify-between items-center word-count">
+                <div id="wordCount"></div>
+                <button id="copyHtmlBtn" class="bg-blue-500 text-white py-1 px-2 rounded text-sm hover:bg-blue-600 transition duration-300">Copy HTML</button>
+            </div>
         </div>
     </div>
 
@@ -231,6 +234,19 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);
             };
+        }
+
+        // Copy HTML to clipboard functionality
+        document.getElementById('copyHtmlBtn').addEventListener('click', copyHtmlToClipboard);
+
+        function copyHtmlToClipboard() {
+            const htmlContent = quill.root.innerHTML;
+            navigator.clipboard.writeText(htmlContent).then(() => {
+                alert('HTML content copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy HTML: ', err);
+                alert('Failed to copy HTML. Please try again.');
+            });
         }
     </script>
 </body>
