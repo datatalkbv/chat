@@ -580,14 +580,7 @@ function updateChatHistory(role, content, isStreaming = false, existingElement =
     return messageElement;
 }
 
-function highlightCode(content) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    tempDiv.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block);
-    });
-    return tempDiv.innerHTML;
-}
+
 
 function escapeHtmlExceptCodeBlocks(content) {
     const codeBlockRegex = /```[\s\S]*?```/g;
