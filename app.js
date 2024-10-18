@@ -712,7 +712,6 @@ recognition.onend = () => {
 };
 
 
-// Function to set the color scheme
 function setColorScheme(scheme) {
     if (scheme === 'dark') {
         document.documentElement.classList.add('dark');
@@ -721,26 +720,11 @@ function setColorScheme(scheme) {
     }
 }
 
-// Check for saved color scheme preference or use the system preference
-const savedScheme = localStorage.getItem('color-scheme');
-if (savedScheme) {
-    setColorScheme(savedScheme);
-} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    setColorScheme('dark');
-}
-
-// Watch for system preference changes
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    setColorScheme(e.matches ? 'dark' : 'light');
-});
-
-// Function to save the system prompt
 function saveSystemPrompt() {
     const systemPrompt = document.getElementById('systemPrompt').value;
     localStorage.setItem('systemPrompt', systemPrompt);
 }
 
-// Function to load the system prompt
 function loadSystemPrompt() {
     const savedSystemPrompt = localStorage.getItem('systemPrompt');
     if (savedSystemPrompt) {
@@ -748,14 +732,6 @@ function loadSystemPrompt() {
     }
 }
 
-// Add event listener for system prompt changes
-document.getElementById('systemPrompt').addEventListener('input', saveSystemPrompt);
-
-// Load the system prompt when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    loadSystemPrompt();
-    setupBackupRestore();
-});
 
 function setupBackupRestore() {
     document.getElementById('backupBtn').addEventListener('click', backupIndexedDB);
@@ -854,3 +830,28 @@ async function clearAllConversations() {
     });
 }
 
+
+
+// Add event listener for system prompt changes
+document.getElementById('systemPrompt').addEventListener('input', saveSystemPrompt);
+
+// Load the system prompt when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadSystemPrompt();
+    setupBackupRestore();
+});
+
+// Watch for system preference changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    setColorScheme(e.matches ? 'dark' : 'light');
+});
+
+
+// Check for saved color scheme preference or use the system preference
+const savedScheme = localStorage.getItem('color-scheme');
+
+if (savedScheme) {
+    setColorScheme(savedScheme);
+} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    setColorScheme('dark');
+}
