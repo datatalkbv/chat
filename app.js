@@ -403,19 +403,25 @@ async function loadConversations() {
 
                 const li = document.createElement('li');
                 li.className = 'conversation-item p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded text-gray-800 dark:text-gray-200 flex justify-between items-center';
-                li.innerHTML = `
-                    <span>${preview}</span>
-                    <i class="delete-icon bi bi-trash text-red-500 hover:text-red-700 cursor-pointer"></i>
-                `;
+                
+                const span = document.createElement('span');
+                span.textContent = preview;
+                li.appendChild(span);
+
+                const deleteIcon = document.createElement('i');
+                deleteIcon.className = 'delete-icon bi bi-trash text-red-500 hover:text-red-700 cursor-pointer';
+                deleteIcon.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteConversation(conversation.id);
+                };
+                li.appendChild(deleteIcon);
+
                 li.onclick = (e) => {
                     if (!e.target.classList.contains('delete-icon')) {
                         displayConversation(conversation);
                     }
                 };
-                li.querySelector('.delete-icon').onclick = (e) => {
-                    e.stopPropagation();
-                    deleteConversation(conversation.id);
-                };
+
                 conversationList.appendChild(li);
             }
             cursor.continue();
