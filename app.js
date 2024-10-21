@@ -233,6 +233,19 @@ function createModelParams(conversation) {
                 stopSequences: []
             }
         });
+    } else if (selectedModel.startsWith('meta.llama')) {
+        let prompt = `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n${systemPrompt}\n<|eot_id|>\n`;
+        messages.forEach(msg => {
+            prompt += `<|start_header_id|>${msg.role}<|end_header_id|>\n${msg.content}\n<|eot_id|>\n`;
+        });
+        prompt += `<|start_header_id|>assistant<|end_header_id|>\n`;
+
+        params.body = JSON.stringify({
+            prompt: prompt,
+            max_gen_len: 8192,
+            temperature: 0.3,
+            top_p: 1
+        });
     }
     // Add more conditions for other model providers if needed
 
