@@ -242,11 +242,11 @@ function createModelParams(conversation) {
 
         params.body = JSON.stringify({
             prompt: prompt,
-            max_gen_len: 8192,
+            max_gen_len: 2048,
             temperature: 0.3,
             top_p: 1
         });
-    }
+    } 
     // Add more conditions for other model providers if needed
 
     return params;
