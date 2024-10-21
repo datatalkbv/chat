@@ -67,17 +67,23 @@ async function loadModels() {
         const modelSelect = document.getElementById('modelSelect');
         modelSelect.innerHTML = '';
 
-        response.modelSummaries.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model.modelId;
-            option.textContent = `${model.modelName} (${model.providerName})`;
-            modelSelect.appendChild(option);
-        });
+        response.modelSummaries
+            .filter(model => model.responseStreamingSupported)
+            .forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.modelId;
+                option.textContent = `${model.modelName} (${model.providerName}) - ${model.modelId}`;
+                modelSelect.appendChild(option);
+            });
 
         // Set the default model (you can change this to your preferred default)
-        const defaultModel = response.modelSummaries.find(model => model.modelId === 'anthropic.claude-3-sonnet-20240229-v1:0');
+        const defaultModel = response.modelSummaries.find(model => 
+            model.modelId === 'anthropic.claude-3-sonnet-20240229-v1:0' && model.responseStreamingSupported
+        );
         if (defaultModel) {
             modelSelect.value = defaultModel.modelId;
+        } else if (modelSelect.options.length > 0) {
+            modelSelect.value = modelSelect.options[0].value;
         }
 
         // Save the selected model
