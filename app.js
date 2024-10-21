@@ -76,13 +76,11 @@ async function loadModels() {
                 modelSelect.appendChild(option);
             });
 
-        // Set the default model (you can change this to your preferred default)
-        const defaultModel = response.modelSummaries.find(model => 
-            model.modelId === 'anthropic.claude-3-sonnet-20240229-v1:0' && model.responseStreamingSupported
-        );
-        if (defaultModel) {
-            modelSelect.value = defaultModel.modelId;
-        } else if (modelSelect.options.length > 0) {
+        // Set the selected model from localStorage
+        setSelectedModel();
+
+        // If no model is selected (e.g., first time use), set a default
+        if (!modelSelect.value && modelSelect.options.length > 0) {
             modelSelect.value = modelSelect.options[0].value;
         }
 
@@ -101,6 +99,15 @@ function saveSelectedModel() {
 
 function getSelectedModel() {
     return localStorage.getItem('selectedModel') || 'anthropic.claude-3-sonnet-20240229-v1:0';
+}
+
+// Add this new function to set the selected model in the dropdown
+function setSelectedModel() {
+    const modelSelect = document.getElementById('modelSelect');
+    const savedModel = getSelectedModel();
+    if (savedModel && modelSelect.querySelector(`option[value="${savedModel}"]`)) {
+        modelSelect.value = savedModel;
+    }
 }
 
 function openSettingsModal() {
@@ -586,7 +593,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add event listener for model selection
     const modelSelect = document.getElementById('modelSelect');
     if (modelSelect) {
-        modelSelect.addEventListener('change', saveSelectedModel);
+        modelSelect.addEventListener('change', () => {
+            saveSelectedModel();
+            console.log('Model selection saved:', modelSelect.value);
+        });
     }
 
     // Mobile sidebar toggle
