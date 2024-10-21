@@ -1,4 +1,4 @@
-import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from 'https://cdn.skypack.dev/@aws-sdk/client-bedrock-runtime';
+import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand, ListFoundationModelsCommand } from 'https://cdn.skypack.dev/@aws-sdk/client-bedrock-runtime';
 import { SignatureV4 } from 'https://cdn.skypack.dev/@aws-sdk/signature-v4';
 import { Sha256 } from 'https://cdn.skypack.dev/@aws-crypto/sha256-browser';
 
@@ -45,6 +45,55 @@ function saveCredentials() {
 function getCredentials() {
     const credentials = localStorage.getItem('awsCredentials');
     return credentials ? JSON.parse(credentials) : null;
+}
+
+async function loadModels() {
+    const credentials = getCredentials();
+    if (!credentials) return;
+
+    const client = new BedrockRuntimeClient({
+        region: credentials.region,
+        credentials: {
+            accessKeyId: credentials.accessKey,
+            secretAccessKey: credentials.secretKey
+        }
+    });
+
+    try {
+        const command = new ListFoundationModelsCommand({});
+        const response = await client.send(command);
+        
+        const modelSelect = document.getElementById('modelSelect');
+        modelSelect.innerHTML = '';
+
+        response.modelSummaries.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.modelId;
+            option.textContent = `${model.modelName} (${model.providerName})`;
+            modelSelect.appendChild(option);
+        });
+
+        // Set the default model (you can change this to your preferred default)
+        const defaultModel = response.modelSummaries.find(model => model.modelId === 'anthropic.claude-3-sonnet-20240229-v1:0');
+        if (defaultModel) {
+            modelSelect.value = defaultModel.modelId;
+        }
+
+        // Save the selected model
+        saveSelectedModel();
+    } catch (error) {
+        console.error('Error loading models:', error);
+        document.getElementById('modelSelect').innerHTML = '<option value="">Error loading models</option>';
+    }
+}
+
+function saveSelectedModel() {
+    const modelSelect = document.getElementById('modelSelect');
+    localStorage.setItem('selectedModel', modelSelect.value);
+}
+
+function getSelectedModel() {
+    return localStorage.getItem('selectedModel') || 'anthropic.claude-3-sonnet-20240229-v1:0';
 }
 
 function openSettingsModal() {
@@ -150,19 +199,43 @@ async function getUpdatedConversation() {
 function createModelParams(conversation) {
     const messages = conversation.messages.map(msg => ({ role: msg.role, content: msg.content }));
     const systemPrompt = document.getElementById('systemPrompt').value;
-    return {
-        modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+    const selectedModel = getSelectedModel();
+    
+    let params = {
+        modelId: selectedModel,
         contentType: 'application/json',
         accept: 'application/json',
         body: JSON.stringify({
+            max_tokens: 8192,
+            messages: messages,
+            temperature: 0.3,
+            top_p: 1
+        })
+    };
+
+    if (selectedModel.startsWith('anthropic.claude')) {
+        params.body = JSON.stringify({
             anthropic_version: "bedrock-2023-05-31",
             max_tokens: 8192,
             messages: messages,
             temperature: 0.3,
             top_p: 1,
             system: systemPrompt
-        })
-    };
+        });
+    } else if (selectedModel.startsWith('amazon.titan')) {
+        params.body = JSON.stringify({
+            inputText: messages.map(msg => `${msg.role}: ${msg.content}`).join('\n') + `\nassistant:`,
+            textGenerationConfig: {
+                maxTokenCount: 8192,
+                temperature: 0.3,
+                topP: 1,
+                stopSequences: []
+            }
+        });
+    }
+    // Add more conditions for other model providers if needed
+
+    return params;
 }
 
 async function invokeModel(client, params) {
@@ -412,6 +485,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initDB();
     checkCredentials();
     await loadConversations();
+    await loadModels();
 
     const elements = {
         openSettingsBtn: document.getElementById('openSettingsBtn'),
@@ -480,6 +554,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Initial call to set correct height
         autoResizeTextarea.call(elements.userInput);
+    }
+
+    // Add event listener for model selection
+    const modelSelect = document.getElementById('modelSelect');
+    if (modelSelect) {
+        modelSelect.addEventListener('change', saveSelectedModel);
     }
 
     // Mobile sidebar toggle
