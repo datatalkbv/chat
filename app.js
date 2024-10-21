@@ -1,4 +1,5 @@
-import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand, ListFoundationModelsCommand } from 'https://cdn.skypack.dev/@aws-sdk/client-bedrock-runtime';
+import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from 'https://cdn.skypack.dev/@aws-sdk/client-bedrock-runtime';
+import { BedrockClient, ListFoundationModelsCommand } from 'https://cdn.skypack.dev/@aws-sdk/client-bedrock';
 import { SignatureV4 } from 'https://cdn.skypack.dev/@aws-sdk/signature-v4';
 import { Sha256 } from 'https://cdn.skypack.dev/@aws-crypto/sha256-browser';
 
@@ -51,7 +52,7 @@ async function loadModels() {
     const credentials = getCredentials();
     if (!credentials) return;
 
-    const client = new BedrockRuntimeClient({
+    const client = new BedrockClient({
         region: credentials.region,
         credentials: {
             accessKeyId: credentials.accessKey,
