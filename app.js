@@ -206,12 +206,6 @@ function createModelParams(conversation) {
         modelId: selectedModel,
         contentType: 'application/json',
         accept: 'application/json',
-        body: JSON.stringify({
-            max_tokens: 8192,
-            messages: messages,
-            temperature: 0.3,
-            top_p: 1
-        })
     };
 
     if (selectedModel.startsWith('anthropic.claude')) {
@@ -243,11 +237,17 @@ function createModelParams(conversation) {
         params.body = JSON.stringify({
             prompt: prompt,
             max_gen_len: 2048,
+            temperature: 0.5,
+        });
+    } else {
+        // Default case for other models
+        params.body = JSON.stringify({
+            max_tokens: 8192,
+            messages: messages,
             temperature: 0.3,
             top_p: 1
         });
-    } 
-    // Add more conditions for other model providers if needed
+    }
 
     return params;
 }
@@ -261,7 +261,14 @@ async function invokeModel(client, params) {
     for await (const chunk of response.body) {
         try {
             const parsed = parseChunk(chunk);
-            if (parsed.type === 'content_block_delta') {
+            if (params.modelId.startsWith('meta.llama')) {
+                if (parsed.generation) {
+                    assistantResponse += parsed.generation;
+                    const parsedContent = marked.parse(assistantResponse);
+                    const highlightedContent = highlightCode(parsedContent);
+                    messageElement = updateChatHistory('assistant', highlightedContent, true, messageElement);
+                }
+            } else if (parsed.type === 'content_block_delta') {
                 assistantResponse += parsed.delta.text;
                 const parsedContent = marked.parse(assistantResponse);
                 const highlightedContent = highlightCode(parsedContent);
